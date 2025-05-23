@@ -1,0 +1,34 @@
+trigger:
+  branches:
+    include:
+      - master
+
+pool:
+  name: Default
+  demands:
+    - agent.name -equals Sonarqube
+    - java
+
+stages:
+  - stage: SonarQubeAnalysis
+    displayName: 'Análisis completo SonarQube'
+    jobs:
+      - job: SonarQubeJob
+        displayName: 'Ejecutar análisis con SonarQube'
+        steps:
+          - task: SonarQubePrepare@7
+            inputs:
+              SonarQube: 'Sonarqube'  # Debe coincidir con el nombre de la conexión en Service Connections
+              scannerMode: 'CLI'
+              configMode: 'file'
+
+          - script: echo "Aquí podrías compilar tu proyecto si hace falta"
+            displayName: 'Compilación (si aplica)'
+
+          - task: SonarQubeAnalyze@7
+            inputs:
+              jdkVersion: 'JAVA_HOME_21_X64'
+
+          - task: SonarQubePublish@7
+            inputs:
+              pollingTimeoutSec: '120'
