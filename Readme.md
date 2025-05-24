@@ -163,6 +163,7 @@ Bien para vincular el helm chart a nuestro pipeline en azure debemos crear una c
 Una vez instalado el cluster mediante terraform corremos el helm chart para desplegar nuestra aplicacion.  Verificamos que todo este bien funcionando y el ingress este exponiniendo nuestro servicio
 
 http://130.131.154.154/
+![alt text](image-21.png)
 
 ## 🏁 Conclusión
 ![alt text](image-19.png)
