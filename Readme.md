@@ -115,7 +115,7 @@ Pasos realizados:
   - Análisis
   - Publicación de resultados
 - Creación del proyecto en SonarQube para obtener el `project-key` y definir el nombre del proyecto.
-![alt text](image-11.png)
+![alt text](image-20.png)
 
 ---
    
