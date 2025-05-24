@@ -1,0 +1,7 @@
+image:
+  repository: sharker3312/dummy-filter
+  tag: latest
+
+service:
+  port: 80
+

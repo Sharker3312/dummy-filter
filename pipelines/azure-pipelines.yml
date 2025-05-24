@@ -20,7 +20,7 @@ stages:
             inputs:
               SonarQube: 'Sonarqube'  # Debe coincidir con el nombre de la conexión en Service Connections
               scannerMode: 'CLI'
-              configMode: 'file'
+              configMode: 'angular/sonar-project.properties'
 
           - script: echo "Aquí podrías compilar tu proyecto si hace falta"
             displayName: 'Compilación (si aplica)'

@@ -1,31 +1,30 @@
 # syntax=docker/dockerfile:1.4
 
-FROM --platform=$BUILDPLATFORM node:17.0.1-bullseye-slim as builder
+# Etapa base: builder con Angular
+FROM node:17.0.1-bullseye-slim as builder
 
-RUN mkdir /project
 WORKDIR /project
 
+# Instala Angular CLI
 RUN npm install -g @angular/cli@13
 
-COPY package.json package-lock.json ./
+# Copia dependencias y las instala
+COPY package*.json ./
 RUN npm ci
 
+# Copia el resto del código
 COPY . .
-CMD ["ng", "serve", "--host", "0.0.0.0"]
 
-FROM builder as dev-envs
+# Etapa final: entorno de desarrollo con herramientas adicionales
+FROM node:17.0.1-bullseye-slim as dev-envs
 
-RUN <<EOF
-apt-get update
-apt-get install -y --no-install-recommends git
-EOF
+WORKDIR /project
 
-RUN <<EOF
-useradd -s /bin/bash -m vscode
-groupadd docker
-usermod -aG docker vscode
-EOF
-# install Docker tools (cli, buildx, compose)
-COPY --from=gloursdocker/docker / /
+# Copia desde el builder el proyecto listo
+COPY --from=builder /project /project
 
-CMD ["ng", "serve", "--host", "0.0.0.0"]
+# Expone el puerto por defecto de ng serve
+EXPOSE 4200
+
+# Ejecuta la app en modo desarrollo
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0"]

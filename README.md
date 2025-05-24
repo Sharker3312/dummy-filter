@@ -8,7 +8,7 @@
 ![alt text](image.png)  
 - **Docker** (usado en el pipeline)  
 - **Azure Agent Pool Self-Hosted** 
-![alt text](image-8.png)  
+![alt text](image-9.png)  
 - **Kubernetes (AKS)**  
 - **Minikube / Hypervisor / Nube** con conexión a Azure DevOps  
 
@@ -75,5 +75,11 @@
 
     Para integrar sonarqube nos vamos al market place y buscamos la el pipeline predefinido de *Sonarqube Server*.
    ![alt text](image-7.png)
+
+   En el pipeline aniadimos en mismo stage las task de sonarqube ya que comparten variables internas.
+   - Preparacion
+   - Analisis
+   - Publicaicon de resultados
+   
 
 
