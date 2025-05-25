@@ -1,4 +1,12 @@
-# Prueba-Dummy
+# 🚀 Proyecto DevOps End-to-End | Angular + Azure + Kubernetes
+
+  http://130.131.154.154/
+
+<div align="center">
+  <img src="image-24.png" alt="Diagrama de Arquitectura" width="700" />
+</div>
+
+
 
 ## 📋 Tabla de Contenidos
 - [Herramientas Instaladas](#herramientas-instaladas)
@@ -56,6 +64,10 @@
 ---
 
 ## Procedimiento
+
+<div align="center">
+  <img src="image-22.png" alt="Procedimiento general" width="500" />
+</div>
 
 ### 1. Selección del Repositorio
 - Se utilizó el proyecto **Angular** de [Awesome Compose](https://github.com/docker/awesome-compose/tree/master/angular)  
@@ -135,7 +147,7 @@ sonar.sourceEncoding=UTF-8
 
 <div align="center">
   <img src="image-15.png" alt="Kubernetes Deployment" width="500" />
-  <img src="image-16.png" alt="Helm Chart Configuration" width="500" />
+  <img src="image-23.png" alt="Despliegue Kubernetes" width="500" />
 </div>
 
 ---
@@ -160,7 +172,6 @@ sonar.sourceEncoding=UTF-8
 | Uso de prácticas DevOps (CI/CD, análisis estático, automatización)   | ✅        |
 
 ---
-
 
 # 🚀 Documentación del Proyecto – DevOps End-to-End con Angular
 
@@ -312,7 +323,7 @@ Para asegurar la calidad del código, se integró SonarQube en el pipeline.
 Pasos realizados:
 
 - Generación de un token de acceso en SonarQube (My Account > Security > Generate Tokens).
-- Instalación del task predefinido “SonarQube Server” desde el Marketplace de Azure DevOps.
+- Instalación del task predefinido "SonarQube Server" desde el Marketplace de Azure DevOps.
 - Agregado de tareas SonarQube en el pipeline en un solo stage para compartir variables internas:
   - Preparación (Prepare analysis)
   - Análisis
@@ -418,8 +429,9 @@ http://130.131.154.154/
 </div>
 
 ## 🏁 Conclusión
+
 <div align="center">
-  <img src="image-19.png" alt="Conclusión" width="500" />
+  <img src="image-24.png" alt="Diagrama de Conclusión" width="500" />
 </div>
 
 Este proyecto demuestra una solución DevOps completa, desde la gestión del código hasta el despliegue en producción en la nube, con integración continua y aseguramiento de la calidad del código.
@@ -429,12 +441,14 @@ Este proyecto demuestra una solución DevOps completa, desde la gestión del có
 ## 📝 Documentación del Código
 
 ### Azure DevOps Pipeline
-El pipeline de CI/CD está estructurado en cuatro etapas principales:
+El pipeline de CI/CD está estructurado en seis etapas principales:
 
 ```yaml
-# Estructura del Pipeline
+# Estructura completa del Pipeline
 stages:
   - stage: SonarQubeAnalysis    # Análisis de calidad del código
+  - stage: DeploymentStage      # Verifica si Quality Gate de SonarQube pasó
+  - stage: QualityGateFailedStage # Se ejecuta si el análisis de SonarQube falla
   - stage: DockerBuildPush      # Construcción y publicación de la imagen Docker
   - stage: ParallelOperations   # Operaciones paralelas demostrativas
   - stage: Deploy               # Despliegue en Kubernetes con Helm
@@ -447,20 +461,35 @@ stages:
 - task: SonarQubePublish@7     # Publica resultados
 ```
 
-#### 2. Construcción y publicación de Docker
+#### 2. Verificación de Quality Gate
+```yaml
+# Si el análisis de SonarQube es exitoso:
+- stage: DeploymentStage
+  displayName: 'QUALITY GATE PASSED'
+  dependsOn: SonarQubeAnalysis
+  condition: succeeded()
+  
+# Si el análisis de SonarQube falla:
+- stage: QualityGateFailedStage
+  displayName: 'Quality Gate Failed'
+  dependsOn: SonarQubeAnalysis
+  condition: failed()
+```
+
+#### 3. Construcción y publicación de Docker
 ```yaml
 - task: Docker@2               # Login a Docker Hub
 - task: Docker@2               # Build & Push (sharker3312/dummy-filter)
 - task: Docker@2               # Logout
 ```
 
-#### 3. Jobs Paralelos
+#### 4. Jobs Paralelos
 ```yaml
 - job: HolaMundoTask           # Ejecuta 10 veces "Hola Mundo"
 - job: FileGenerationTask      # Genera 10 archivos con timestamp
 ```
 
-#### 4. Despliegue con Helm
+#### 5. Despliegue con Helm
 ```yaml
 - task: HelmDeploy@1           # Usa conexión a Kubernetes y despliega el chart
 ```
@@ -572,5 +601,23 @@ El Chart de Helm permite parametrizar los despliegues y facilita actualizaciones
 2. Se construye la imagen Docker y se publica en Docker Hub
 3. La imagen se despliega en un clúster de Kubernetes en Azure (AKS) utilizando Helm
 4. El servicio se expone a través de un Ingress para acceso público
+
+---
+
+
+
+# Contacto
+
+
+- 📧 **Email:** lesterdprez.work@gmail.com
+- 💼 **LinkedIn:** https://linkedin.com/in/lesterdprez
+- 🌐 **GitHub:** github.com/sharker3312
+
+
+---
+
+<div align="center">
+  <b>Dispuesto a enfrentar nuevos retos y aportar valor</b>
+</div>
 
 

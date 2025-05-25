@@ -10,99 +10,128 @@ pool:
     - java
 
 stages:
-  - stage: SonarQubeAnalysis
-    displayName: 'Análisis completo SonarQube'
-    jobs:
-      - job: SonarQubeJob
-        displayName: 'Ejecutar análisis con SonarQube'
-        steps:
-          - task: SonarQubePrepare@7
-            inputs:
-              SonarQube: 'Sonarqube'
-              scannerMode: 'CLI'
-              configMode: 'manual'
-              cliProjectKey: 'dummy-filter_dummy-filter_4bf01b38-6e0c-49a6-a614-aeca0e504d71'
-              cliProjectName: 'dummy-filter'
+- stage: SonarQubeAnalysis
+  displayName: 'SonarQube jobs'
+  jobs:
+  - job: SonarQubeJob
+    displayName: 'Prepare SonarQube Analysis'
+    steps:
+    - task: SonarQubePrepare@7
+      inputs:
+        SonarQube: 'Sonarqube'
+        scannerMode: 'CLI'
+        configMode: 'manual'
+        cliProjectKey: 'dummy-filter_dummy-filter_4bf01b38-6e0c-49a6-a614-aeca0e504d71'
+        cliProjectName: 'dummy-filter'
+    
+    - task: SonarQubeAnalyze@7
+      inputs:
+        jdkVersion: 'JAVA_HOME_21_X64'
+    
+    - task: SonarQubePublish@7
+      inputs:
+        pollingTimeoutSec: '120'
 
-          - task: SonarQubeAnalyze@7
-            inputs:
-              jdkVersion: 'JAVA_HOME_21_X64'
+- stage: DeploymentStage
+  displayName: 'QUALITY GATE PASSED'
+  dependsOn: SonarQubeAnalysis
+  condition: succeeded()
+  jobs:
+  - job: DeployJob
+    displayName: 'Deploy Application'
+    steps:
+    - script: echo "✅ Quality Gate passed! Deploying application..."
+      displayName: 'Deploy Success Message'
 
-          - task: SonarQubePublish@7
-            inputs:
-              pollingTimeoutSec: '120'
+- stage: QualityGateFailedStage
+  displayName: 'Quality Gate Failed'
+  dependsOn: SonarQubeAnalysis
+  condition: failed()
+  jobs:
+  - job: FailedJob
+    displayName: 'Handle Quality Gate Failure'
+    steps:
+    - script: |
+        echo "❌ Quality Gate failed!"
+        echo "Deployment blocked due to code quality issues."
+        echo "Please check SonarQube report and fix the issues."
+      displayName: 'Quality Gate Failed Message'
+    
+    - script: exit 1
+      displayName: 'Fail Pipeline'
 
-  - stage: DockerBuildPush
-    displayName: 'Build and Push Docker Image'
-    jobs:
-      - job: DockerJob
-        displayName: 'Login, Build, Push and Logout Docker Hub'
-        steps:
-          - task: Docker@2
-            displayName: 'Login to Docker Hub'
-            inputs:
-              containerRegistry: 'dockerhub'
-              command: 'login'
+- stage: DockerBuildPush
+  displayName: 'Build and Push Docker Image'
+  dependsOn: DeploymentStage
+  jobs:
+  - job: DockerJob
+    displayName: 'Login, Build, Push and Logout Docker Hub'
+    steps:
+    - task: Docker@2
+      displayName: 'Login to Docker Hub'
+      inputs:
+        containerRegistry: 'dockerhub'
+        command: 'login'
 
-          - task: Docker@2
-            displayName: 'Build and Push Docker Image'
-            inputs:
-              containerRegistry: 'dockerhub'
-              repository: 'sharker3312/dummy-filter'
-              command: 'buildAndPush'
-              Dockerfile: 'angular/angular/Dockerfile'
-              tags: |
-                $(Build.BuildId)
-                latest
+    - task: Docker@2
+      displayName: 'Build and Push Docker Image'
+      inputs:
+        containerRegistry: 'dockerhub'
+        repository: 'sharker3312/dummy-filter'
+        command: 'buildAndPush'
+        Dockerfile: 'angular/angular/Dockerfile'
+        tags: |
+          $(Build.BuildId)
+          latest
 
-          - task: Docker@2
-            displayName: 'Logout from Docker Hub'
-            inputs:
-              containerRegistry: 'dockerhub'
-              command: 'logout'
+    - task: Docker@2
+      displayName: 'Logout from Docker Hub'
+      inputs:
+        containerRegistry: 'dockerhub'
+        command: 'logout'
 
-  - stage: ParallelOperations
-    displayName: 'Operaciones Paralelas Post-Docker'
-    dependsOn: DockerBuildPush
-    jobs:
-      - job: HolaMundoTask
-        displayName: 'Hola Mundo'
-        pool:
-          name: Default
-          demands:
-            - agent.name -equals Sonarqube
-        steps:
-          - script: |
-              seq 1 10 | xargs -I{} echo "Hola Mundo #{}"
-            displayName: '10 Hola Mundo'
-            timeoutInMinutes: 1
+- stage: ParallelOperations
+  displayName: 'Operaciones Paralelas Post-Docker'
+  dependsOn: DockerBuildPush
+  jobs:
+  - job: HolaMundoTask
+    displayName: 'Hola Mundo'
+    pool:
+      name: Default
+      demands:
+        - agent.name -equals Sonarqube
+    steps:
+    - script: |
+        seq 1 10 | xargs -I{} echo "Hola Mundo #{}"
+      displayName: '10 Hola Mundo'
+      timeoutInMinutes: 1
 
-      - job: FileGenerationTask
-        displayName: '10 fecha-files and print'
-        pool:
-          name: Default
-          demands:
-            - agent.name -equals Agent2
-        steps:
-          - script: |
-              seq 1 10 | xargs -I{} sh -c 'echo "Generado el $(date +%Y-%m-%d_%H-%M-%S)" > archivo_{}.txt'
-              seq 1 10 | xargs -I{} tail -n 1 archivo_{}.txt
-            displayName: 'crear 10 archivos y mostrar contenido'
-            timeoutInMinutes: 1
+  - job: FileGenerationTask
+    displayName: '10 fecha-files and print'
+    pool:
+      name: Default
+      demands:
+        - agent.name -equals Agent2
+    steps:
+    - script: |
+        seq 1 10 | xargs -I{} sh -c 'echo "Generado el $(date +%Y-%m-%d_%H-%M-%S)" > archivo_{}.txt'
+        seq 1 10 | xargs -I{} tail -n 1 archivo_{}.txt
+      displayName: 'crear 10 archivos y mostrar contenido'
+      timeoutInMinutes: 1
 
-  - stage: Deploy
-    displayName: "Desplegar con Helm"
-    dependsOn: DockerBuildPush
-    jobs:
-      - job: helm_upgrade
-        displayName: "Helm Upgrade"
-        steps:
-          - task: HelmDeploy@1
-            inputs:
-              connectionType: 'Kubernetes Service Connection'
-              kubernetesServiceEndpoint: 'clusterdummy'
-              command: upgrade
-              chartType: FilePath
-              chartPath: ./k8s
-              releaseName: angular
-              install: true
+- stage: Deploy
+  displayName: "Desplegar con Helm"
+  dependsOn: DockerBuildPush
+  jobs:
+  - job: helm_upgrade
+    displayName: "Helm Upgrade"
+    steps:
+    - task: HelmDeploy@1
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'clusterdummy'
+        command: upgrade
+        chartType: FilePath
+        chartPath: ./k8s
+        releaseName: angular
+        install: true
